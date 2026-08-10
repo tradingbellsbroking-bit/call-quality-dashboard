@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Call Quality Dashboard</title>
 <script>/*!
  * Chart.js v4.4.4
@@ -28,14 +29,23 @@
     background: var(--bg); color: var(--text); margin: 0; padding: 32px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
-  .header { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 4px; flex-wrap: wrap; }
+  .header { display: flex; align-items: center; gap: 14px; }
   .header img { height: 40px; width: auto; max-width: 180px; object-fit: contain; }
   h1 { font-size: 22px; font-weight: 600; margin: 0; }
   .subtitle { color: var(--muted); font-size: 13px; margin: 4px 0 28px; }
+  .lang-toggle {
+    display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+  }
+  .lang-toggle button {
+    background: var(--panel); color: var(--muted); border: none; padding: 7px 14px;
+    font-size: 13px; cursor: pointer; font-weight: 600;
+  }
+  .lang-toggle button.active { background: var(--accent); color: #0b0e14; }
   .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
   .panel {
     background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
-    padding: 20px;
+    padding: 20px; min-width: 0;
   }
   .panel h2 { font-size: 15px; font-weight: 600; margin: 0 0 14px; color: var(--text); }
   .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
@@ -45,14 +55,16 @@
   }
   .card .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
   .card .value { font-size: 24px; font-weight: 700; }
-  .agent-select { margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .filter-row { margin-bottom: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   select {
     background: #0f1115; color: var(--text); border: 1px solid var(--border);
-    border-radius: 8px; padding: 6px 10px; font-size: 13px;
+    border-radius: 8px; padding: 7px 10px; font-size: 13px; min-height: 36px;
   }
   .chart-box { position: relative; height: 260px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .table-scroll { max-height: 520px; overflow-y: auto; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td.wrap { white-space: normal; }
   th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; }
   tbody tr { cursor: pointer; transition: background 0.1s; }
   tbody tr:hover { background: #1d212b; }
@@ -60,7 +72,6 @@
     display: inline-block; padding: 2px 8px; border-radius: 999px; font-weight: 600; font-size: 12px;
   }
   .empty { color: var(--muted); padding: 40px; text-align: center; }
-  .table-scroll { max-height: 520px; overflow-y: auto; }
 
   .modal-backdrop {
     display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
@@ -71,7 +82,7 @@
     background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
     max-width: 640px; width: 100%; max-height: 85vh; overflow-y: auto; padding: 24px;
   }
-  .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+  .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; gap: 10px; }
   .modal-header h3 { margin: 0; font-size: 17px; }
   .modal-close {
     background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer;
@@ -90,12 +101,34 @@
   .tag-strength { color: #4ade80; }
   .tag-issue { color: #f87171; }
   .tag-improve { color: #7c9eff; }
+
+  @media (max-width: 820px) {
+    body { padding: 16px; }
+    .grid { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: 1fr 1fr; }
+    .header img { height: 32px; }
+    h1 { font-size: 19px; }
+    .chart-box { height: 220px; }
+    .modal { max-width: 100%; padding: 18px; border-radius: 10px; }
+    .modal-backdrop { padding: 10px; }
+    select, .lang-toggle button { min-height: 40px; }
+  }
+  @media (max-width: 480px) {
+    .cards { grid-template-columns: 1fr; }
+    .card .value { font-size: 20px; }
+  }
 </style>
 </head>
 <body>
-  <div class="header">
-    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGIAAAAmCAYAAAA/bE50AAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4QsIBjAmqm60xQAACdpJREFUaN7t23uQ3WV5B/DPe84JWTYJFw0UbMplTCpCLVBqxTJYTOzIOAPa8TLUsU5HJ6jpbrMzTlWk00rruJXpRUz6R9k63q+92DpUqDVbpkwhtSISSwskYJRLBYmAhOxuds95+8fz/vb8svcNocnM7ndmZ8+e33t5fs/zvM/tfZZlHBNIR5uACv0DgxU9qzGK8W0fu+Zok/X/htaG4SFoyFZYmGDaGC8jG+jFSjTLD3QwmtmfaI8/O27vFVsWQs9Z+Ct8Ddv7tw7adsPMwtiwYwiakh4ch1ahp1FoHMGz6OzeuHnqvIQVZWyWHETWOsj4SlJuyVrI5V07uzduruYqc5v1uYfsMTy5xxqcWMZnoWDPFLqylO1+9dUhiDL3HMlgYWqeg1FN3IEPYQLn4OM4pWxWrdfBM4l78bkVq1Z8c8PwULtOLHz+TexcN6js+2u4CpuwDknyTwPvHXywPWG6QEIRNuEPcHwRRsXcNp7Ed/HZ9cNDO1PFrJh3Mv4MZ+BRvBePmziOlF+AD0t+vvDi69i2YXhoorbz+8reT5bPD0wKILh3Lt6JS3Bq4UsliH34QoftjdzV+4pxJ2GjMAvzYVT35JyAXymSnwm/jMvxdty8YXhIXRhFCKvwEWwuDIWX4gZsbre9R/LvfVsHbZ9+Ok4vLzsbXokrE1fj6+uHJzV6ZZm3AXvRU5tzZlGIk8vf5+N2/EdNEC/Dq4sg1oQQbqyeXoDPlDGz4e5GcojKV4L4Mb5cCOrgtCKYJn6Efy3fN/Cd8nkq7inMO1iIu6q87FpclfnnVJu38aKPixPqdXhXYU4d1QtfizenFIPnwB34AsbxQrwZF+BnhdbennjK/Gg41ESfgt8mf5vUnn1aqvg5UBPCPuzAw2VASyjbv8ik3rGaIDLk3XIKVW3KsssKE3sLg9+pbbRGXtaYRsnD+HQRBHwff1cYfGbKenCgGnzupc8qSvGrMwihjl/Ei7B7Hgbeg+21v4fxj8I0XCjMxe0LEEQdTwhr8QbSkFDCubBOmFhCIa6V85CUOprTZXj/xX1dQezeNGkqMpOOpu4nMjqaMzqkufC08CMzMjmhZ2WPkbHRE+ZZ53hdk7UY7MJ/iZO9RpihxQpil7AO5+LtOXfuSqkxlw89UwgeHsLNUupM9Y0zoTXviIWjJSKEMeE4XyNOFDyQ5ZGUaic+ZwdGR5oppRPnWfc4C/NdtbWRjWh4tHyTagxaDPYJk3cu3phS4xPk780RXK7VVbzHhQ8pSpuR1hUedfADHKiE1HDk8HLcImzivwm73BEm4xMppZxzTZlSklJaJWz4XDgeP7cYQnKi0ZQ5xK/0LmaNgg6+KBz6OryNNBfPemo8HZFNFKUgpwZ+H7fhZlOc+ZEUxAn4JREpvbQw8H/Qp5iEPZuunjpnncgd5kITF0pJ39bBBRFSC0jqqpsXNHnK3jlC8K+Uv98iQvbOolfKkzw6WZycFfXHR1IQ9+ED+D18TjjtX8DvmBLe9g18pPp4CX5mAWu/Ss4npUXUAXJHEqFxhQMLn93F/pXa+KwIRs7Cb84xfERXSD2S5kJrF0dSEHvxF/hT/C7uLN+/VkQtk0hB3Rq8ycKy+fNxKfQNLOxUSHrFiSP08bHDeanVBzXlzj342/LVG0VIOxP2CR9JaP18/m8SR1IQNR54UjcBWiMSK+uHh6qaElyBVy1wyV68Bycu4lC8QtcOP437D/+FGlkkaf+Ll+DiWUY+JEJeImvfuFIrNK/hNLML8IhGTZMoxvjbukngJTiukSdzjPPwQYdmtPPh17Elc33/wGD7lunPL8J1ZfuTRKL4gvLsP/Hfz/F97k58FVvMHsU9XPY6Q0RPHx0zcXnhwwXCd86I2QSRPPfK7C6hHacK03LGmQ+O7MHZ+EshjMWghQ8k9rVz58ZGO+s0DyHxQlNMYMEDGBTFtsNGqQp8Spimyq91VD4hd0iNg6JoeWl579Px1jJ2v4iYXjnby82Ex4VN7BWFs9mihH34e6Ehd04Zt1dk2mcLu9nbM9pRiHuxqFlVkUzSrdzWo4mDooBXYSXOb6TUbLZzu9NMPxRFuVXlWaus1cFPRCb8pZzyrpST3Rs3V4noSJm3TpRw6o78SaH5J4horx5t3YU/FAU/2CPyAbs3vataewfegXdjvUhq78Xnxal8n8iNnqitO13raxlz5T+qSNgsmfW0cVPWr/bIl9z6VF7z04mmSJBOqc1riSP/IpGPpMKs94uTVQlpvLzMvluuXCuTUrckXZXBK0GMycakeelmuqJNvlNOssyejZu7hb1uLpFNKYG/eMeNmqkhyz1FmB3ho8anrN2p8/SoXwz1DQxWRLxDhIYnCXt/q4jbn1gKF0TN577Ec8O3du7wiotfQxzfLDT8Nvwxfphl39q542iT+bzjqJ+ICv1bI8nLKTVlHXLefsMHjzZZy1jGMpaxjGUsYxmBYyZqer5QioyrRbGuR7e15afYK3mqpKEtUSM6UTc5HcMjIrs/C6M524vO9huuqdbuFVekB0U1ob3tY9fo2zoYaV/2wrL3ybrJ3UM5exi56kx5Xop+xyAuEpc7q3Sz7zHslG3BgyKhvFYklNXd0rjI+PeKssf3ROl+f23t80STxB78hmC0FCuchSHRIFEVOCewIyVvqa+zVASxQjD4+6IhrikY/1pR1f0UfkuciJtEybyyFveLUv5aXSHV0SrPnjD9WmGTuLu/T9TuxsveP9C9t5hcZKmggUczn0xRxzpdlKZX6/YbjeF63FaVVYr5ueww96wuhu6UXYfx2VpIl5IgMk5NUcZOolPvx6JqXGl5C2/Aef0Dg0082unkf2g00uHcdxNlmxFcIfkMvtY/MHhbzh5J5LpQnpcbumMUbdHbdD3+XDQ53FGYVfmEpmjP/JPyc3VqpBWHtVvgVnxU3IVcJe6+v5GSt6bcSVVZh6UliKa4W3mdOA1/jStFuychjHFsFd16l2FrSpO3iotCMW0H8GHhK/pFm9FL8Ee50ThbrRtiKZmmhGcz9xUfcau4vLlItymsI5zz3VN8RMWxlKY76zTl9yTKGu3+vsF7tdwrIq9vilB4nYjWsLQEkXFKilMwLsJQ4qZwQjjqlaKd/uX9A4ONMucmIbiDWC+5Dk8XH7JLRGJj4ibyQ/hJ/8BgS/R0fQevV/1PSbRvnlb2PKSpeqkIoiPMxDmiG6O6OXwIf1OSuq+Ky/23qfp9g4GPiX+c+YYwa/3lWRJNzu8WHY6vFz1c1bObVI3IEZlVJ2ZUdN7fVydwqQjiLnECemvvPIoH5Lyn8Gib6CBfq5vMjYku9GfE/2+cJ8LcCXFCHpPzPiltEQ0RvYc8i6jscnEKVgvBPlLo2Z/a45ZxjOH/AI8e9OKr/BP+AAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE3LTExLTA4VDA2OjQ4OjM4LTA1OjAwgTrz3gAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxNy0xMS0wOFQwNjo0ODozOC0wNTowMPBnS2IAAAAASUVORK5CYII=" alt="logo">
-    <h1>Call Quality Dashboard</h1>
+  <div class="topbar">
+    <div class="header">
+      <img src="data:image/png;base64,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" alt="logo">
+      <h1>Call Quality Dashboard</h1>
+    </div>
+    <div class="lang-toggle">
+      <button id="langEnBtn" class="active" onclick="setLang('en')">EN</button>
+      <button id="langHiBtn" onclick="setLang('hi')">हिंदी</button>
+    </div>
   </div>
   <div class="subtitle">Generated from data/calls.csv &mdash; rerun <code>python dashboard.py</code> to refresh. Click any row for full details.</div>
 
@@ -106,7 +139,30 @@
   </div>
 
 <script>
-const DATA = [{"date": "2026-08-06", "agent": "Shantilal", "call_number": "", "language": "hi", "notes": "", "score": 2.0, "summary": "The call is disorganized and confusing, with the agent failing to give any clear, accurate pricing or product details, and offering only a vague, unresolved response when the customer appears to accuse them of unprofessional bargaining.", "strengths": ["Agent attempts to collect basic customer details (name, number, email) at the start of the call."], "issues": ["No clear or accurate price/quantity information is ever given ('शर आबी क्या जो प्राईज है' goes unanswered with a concrete figure).", "Agent seems confused about NSE vs. their own offering ('NSE नहीं... हमारी तरुवा बाई कर सकते है'), showing lack of product clarity.", "When the customer appears to call out inappropriate behavior ('आप अप अपना ताईं बरबात कर रेवा मालिंग'), the agent's response is just 'जी जी जी' — no explanation, no de-escalation, no alternative offer.", "The conversation is circular and lacks structure — no clear introduction, needs assessment, pitch, or next steps are discernible.", "No adaptation to whatever background/need the customer stated; agent seems to be reading from a generic script regardless of customer signals."], "improvements": ["Clearly state the specific product, current market price, and available quantity/investment tiers upfront.", "Actively listen to and repeat back the customer's stated need before pitching, to confirm understanding.", "When a customer raises a concern or objection, respond with a specific, reasoned explanation rather than a bare acknowledgment.", "Structure the call with a clear flow: introduction, needs discovery, tailored pitch, Q&A, and next steps.", "Avoid ambiguous statements about pricing ('चो भी सो कर रेथ चलता है') and instead provide concrete numbers."]}, {"date": "2026-08-06", "agent": "Shantilal", "call_number": "", "language": "hi", "notes": "", "score": 2.0, "summary": "The agent fails to grasp the customer's specific request for unlisted shares (NSC/MSCI), gives an arbitrary and seemingly inflated price without justification, and when the customer explicitly calls out the haggling behavior as unprofessional ('sabzi mandi'), the agent offers no concrete resolution and the customer ends the call frustrated.", "strengths": ["Agent remains polite in tone, saying 'मैं बिल्कुल समझ सकता हूं सर' when challenged.", "Agent attempts to explain the process ('इसलिए प्रोसेस है पूरा सा') rather than ignoring the customer entirely."], "issues": ["Agent seems unclear about what the customer already holds/wants, repeatedly asking 'किस कंपनी के शेयर' and 'MSCI आपके पास है क्या' without a clear structured approach.", "When asked for price, the agent turns the question back to the customer ('आपका प्राइज दोना, आप मेरा क्यों पूछ रहा है?') instead of proactively providing accurate market information — a clear failure of follow-through.", "Agent later gives a single arbitrary figure ('24,000 का रेट चलता है') with no explanation of tiers, quantities, or how this price was derived, inviting the pushback that follows.", "When the customer explicitly and directly calls out the behavior as inappropriate bargaining ('आपको आपन सब्जी मंडि में नहीं आये हैं... भावतोल सब्जी मंडि का दंदा नहीं है'), the agent only offers a weak acknowledgment ('मैं बिल्कुल समझ सकता हूं सर') without any concrete revised offer or alternative pricing.", "The customer repeats the same objection twice ('तो फिर आप सब्जी मंडि का बात कर रहे हो सर'), indicating the agent's response did not resolve the concern at all.", "No adaptation is shown despite the customer stating he has prior share market experience and specific holdings (MSCI, NSC) — the agent keeps circling back to generic questions instead of tailoring the pitch.", "The call ends with the customer stating 'आप अपना टाइम बरबाद कर रहे हैं' with no resolution, next steps, or recovery from the agent."], "improvements": ["Before quoting any price, agent should have researched or referenced the correct current market rate for the specific unlisted share (MSCI/NSC) the customer named, rather than throwing out a number and deflecting the pricing question back to the customer.", "When challenged about behaving like a 'sabzi mandi' vendor, the agent should immediately de-escalate with a specific, well-reasoned explanation and offer concrete price/quantity tiers instead of a generic apology.", "Agent should actively listen for and confirm the customer's stated background/holdings (e.g., prior shares, MSCI ownership) early and adjust the pitch depth and terminology accordingly instead of asking repetitive clarifying questions.", "Structure the call with a clear flow: confirm the exact product/interest, present accurate pricing with quantity options upfront, then address objections — avoiding the circular exchange seen here.", "If pricing feels contested, proactively provide a price range with justification (e.g., 'the current range for this unlisted share is X–Y depending on lot size') rather than a single rigid figure."]}, {"date": "2026-08-06", "agent": "Poonam", "call_number": "", "language": "hi", "notes": "Lead | non DM", "score": 3.0, "summary": "The agent gathered some basic profiling info (age, student status, school timing) but pitched a real trading account to a minor/school student without properly addressing the stated time constraint, and ultimately left the follow-up open-ended by telling the customer to call back instead of locking in a specific next contact.", "strengths": ["Asked about current status of the demo account and how long it had been held.", "Attempted to profile the lead by asking about age, education level (school vs college), and daily schedule.", "Maintained a generally polite and calm tone throughout the call."], "issues": ["Pitched converting to a 'real' account ('रियल डेमोट अकांट') to a school student before fully understanding their availability or interest, showing weak sequencing of qualification before pitch.", "When the customer explicitly raised a concern about time ('पर मैं में बोडर रहा हूँ... टायन्में नहीं मिलता'), the agent's response was vague ('तो आप समझ रहे हों') rather than a concrete resolution or adjusted offer.", "Explanations of the product (learning to trade stocks, mutual funds, SIP, IPO) were generic and rushed, without clear structure or verification that the customer understood.", "No pricing or account-opening cost was clearly and proactively confirmed beyond a passing 'कोई पैसा तो लग नहीं रहे है' statement, with no elaboration on process specifics.", "The call ended with the agent asking the customer to call back on their own initiative ('आपको अगर कभी start करना रहा है तो call कर दीजिएगा') rather than the agent proposing and locking a specific follow-up day/time.", "Some redundant/repeated questions (age asked twice, 'अभी वर्किंग' asked oddly) suggest inconsistent listening and scripted flow rather than adaptive conversation."], "improvements": ["Complete basic qualification (age, occupation/student status, availability) before pitching any specific product or account upgrade.", "When a time-related objection is raised, directly acknowledge it and propose a specific low-commitment next step (e.g., a short call or demo at a convenient time) instead of glossing over it.", "Provide clear, structured information on process and any costs/requirements instead of a rushed, run-on explanation.", "Always end the call by proposing and confirming a specific day/time for follow-up, keeping ownership with the agent rather than asking the customer to call back.", "Avoid repeating already-answered questions (e.g., age) to respect the customer's time and demonstrate active listening."]}, {"date": "2026-08-07", "agent": "Jaya", "call_number": "2", "language": "hi", "notes": "", "score": 2.0, "summary": "The call is largely incoherent, with the agent failing to clearly profile the customer, explain any product details, or lock in a concrete next step, resulting in a confused, unresolved conversation.", "strengths": ["Agent attempts to open with a polite greeting and introduces themselves and the company.", "Agent tries to probe the customer's saving capacity (mentions ₹500-1000) as a starting point."], "issues": ["No clear identification of who the customer is, their goals, or decision-making status beyond a vague mention of '25' and lack of current funds.", "Customer explicitly states 'अभी तो नहीं है न पैसे' (no money right now) but the agent doesn't adapt the pitch or offer alternatives, just pivots to fixing a 'date'.", "Explanation of pricing/process is garbled and inconsistent ('बाज तारिक को...बैंक आपको...इजमपल अगर आप') with no clear, defensible figures.", "Agent's attempt to explain a 'free' period or offer is confusing and incomplete ('साथ बीच में अजिससे चे तक फ्री ने रहते हैं').", "No direct answer to any implied customer curiosity about the stock market or investment process.", "No scheduling of a specific day/time or clarity on who will follow up next; the call trails off without resolution.", "Overall tone and flow are disorganized, with agent seemingly confused by their own explanation ('अच्यं! क्यों हम भी एक भी जब कर रहे हैं')."], "improvements": ["Clearly establish the customer's financial situation, experience level, and goals before pitching.", "Provide accurate, specific pricing and process information rather than vague or garbled explanations.", "Directly address any implied questions about the stock market or investment mechanics.", "Adapt the pitch when the customer states a constraint (e.g., no current funds) rather than pushing forward with unrelated scheduling.", "End the call with a concrete, agent-owned next step (specific date/time and clear ownership of follow-up)."]}, {"date": "2026-08-07", "agent": "Jaya", "call_number": "3", "language": "hi", "notes": "", "score": 1.0, "summary": "The transcript is largely garbled and incoherent, showing no discernible profiling, no accurate product information, no clear pitch, and no resolved next steps — the agent fails on nearly every dimension of the rubric.", "strengths": ["Agent opens with a greeting and identifies themselves and their company (IFL Capital Services)."], "issues": ["The dialogue is almost entirely incomprehensible/garbled ('अइं, अइना आप नहीं करने हैं सराइ', 'सराइ, जअएआ बात कर रही हूँ'), making it impossible to discern any coherent pitch or explanation.", "No clear profiling occurs — questions about whether the customer works in the stock market are asked confusingly and answers ('नहीं नहीं way', 'कुछ पान कर रहे हैं start करने की') are not followed up meaningfully.", "No specific figures, amounts, products, or market information are ever presented, so there is no way to assess accuracy or soundness of any pitch.", "No decision-maker check, no life-stage/goal discussion, no illustration or example is used at any point.", "The call ends abruptly with 'आउकि साथ थाइंक्यू' with no scheduled follow-up, no ownership of next steps, and no clear resolution.", "There is a large unexplained gap in the transcript (00:46 to 03:49) suggesting either missing content or a long silence/confusion, with no indication of what transpired."], "improvements": ["Ensure clear, audible, and coherent communication — avoid mumbled or fragmented statements that prevent the customer from understanding the pitch.", "Conduct actual structured profiling: ask about the customer's experience, current investments, goals, and availability before pitching anything.", "Introduce a specific, relevant product or investment idea with accurate figures once basic profiling is complete.", "Always close with a clear, agent-owned next step (specific day/time for follow-up) rather than an abrupt sign-off.", "Train agent on clear articulation and pacing to avoid garbled, confusing dialogue that undermines professionalism and trust."]}, {"date": "2026-08-03", "agent": "Sagar", "call_number": "1", "language": "hi", "notes": "", "score": 2.0, "summary": "The agent conducts a confused, poorly structured pitch with inconsistent and unexplained return figures, fails to properly qualify the customer's actual goals or decision-making context, and the call ends abruptly with no clear next step.", "strengths": ["Agent attempts some basic profiling by asking about occupation and age ('आपने बताई आप जॉब पर्सन हैं', 'सर आपकी उम्र क्या है')", "Agent tries to give a numeric illustration (5000/month, 5 years, 12%) rather than pure vague claims"], "issues": ["Return figures are inconsistent and unexplained — first '12%' is quoted for a 5-year SIP, then later '10% अर्निंग' is mentioned for 'medium companies' with no clarification of which product or why the rate changed", "The math itself appears inconsistent/unclear ('4,12,000 रूपे', '3,00,000 रूपे का इन्वेस्टमेंट', 'लाभ बारा हज़ार रूपे') — figures don't cleanly reconcile and are delivered in a garbled, hard-to-follow way", "When the customer seems to raise a preference about lumpsum investment ('अगर आप लम्सम में जाते हैं'), the agent brushes past it without directly answering whether lumpsum is viable or beneficial", "No clear qualification of investment goal was locked down — the agent lists options (children's education, marriage, retirement) and the customer's answer (retirement, age ~49-50) is only superficially used before jumping into generic product mechanics", "No check on whether the customer is the sole decision-maker for this investment (e.g., spouse involvement)", "The proposed SIP amount (5000, later stepped up to 10,000) is not clearly tied to any capacity/goal discussion for a customer nearing retirement (49-50 years old)", "The call ends with repeated, garbled, nonsensical fragments ('आपको आपको प्रवाज़ार कर पाएंगे') with no resolved next step, no confirmed follow-up day/time, and no clarity on who will call whom", "Explanation of fees ('पास साल के लिए भी... कोई चार्ज नहीं') is vague and unclear, not a direct, complete answer", "Overall delivery is mumbled/unclear per rubric's example of poor quality communication"], "improvements": ["Clarify and use one consistent, accurate return figure with appropriate caveats (mutual fund returns are market-linked, not guaranteed at a fixed %)", "Directly address the customer's implied preference about lumpsum vs SIP instead of glossing over it", "Tie the investment amount and goal explicitly to the customer's near-retirement life stage (e.g., realistic corpus needed, risk appetite appropriate for a 49-50 year old)", "Ask about spousal/household involvement in financial decisions before assuming the customer alone will decide", "End the call with a specific, agent-owned next step (e.g., 'I will call you tomorrow at 5 PM with the exact plan details') rather than trailing off", "Slow down and clearly enunciate figures and terms so illustrations are understandable and verifiable", "Avoid repeating the same unclear phrase multiple times; instead, pause and let the customer respond or ask clarifying questions"]}, {"date": "2026-08-07", "agent": "Jaya", "call_number": "3", "language": "hi", "notes": "", "score": 3.0, "summary": "The agent attempts to pitch SIP/mutual fund investing with some numeric illustrations and light profiling, but the delivery is confused and rambling, mixes daily trading with long-term SIP without clear distinction, and presents return figures as near-certain outcomes without caveats.", "strengths": ["Agent does ask about the customer's profession, availability, and field of work before pitching amounts.", "Agent gives specific numeric examples (₹500/month, ₹1000/month, ₹2000/month for 10 years) with projected totals rather than staying purely abstract.", "A concrete next step is proposed (agent will call the customer back at 6 pm), which the customer agrees to."], "issues": ["The agent conflates 'daily basis trading' with 'long-term investment' ('अगर आप जैसे अगर देली बेसिस पर नहीं वर्किंग करना सकते तो लॉन्ग में इंवेस्टमेंट आपका कर सकते हैं') without clearly explaining how SIP/mutual fund investing relates to stock trading — a conceptual conflation.", "Returns are quoted as specific rupee outcomes ('टोटल वेल्यू रहेगी वह 112000 रहेगी', 'रिटर्न जो मिलेगा दो लाख आठ हजार मिलेगा') with no explicit caveat that 12% is an indicative/historical assumption, not guaranteed.", "The SIP amounts pitched (500, 1000, 2000) appear arbitrary and not clearly tied to any stated income, capacity, or goal of the customer — the agent asks about job/field but doesn't use the answer to size the recommendation.", "Delivery is highly disorganized and stumbling throughout, with incomplete/garbled sentences that would likely confuse a real customer (e.g., '...अजारा▯ be a fast in 12% रहता ही है तो आपका जोर्स तारीके...').", "The agent introduces multiple illustrative scenarios back-to-back (500/month, 1000/month, 2000/month) without checking comprehension or tying them to a specific goal, risking information overload.", "No clear qualification of the customer's actual investment goal (retirement, short-term, wealth building) before recommending amounts or tenure — the agent picks a 10-year example without establishing why."], "improvements": ["Clarify explicitly that SIP is a mode of investing in a mutual fund, distinct from daily/delivery-based stock trading — don't conflate the two.", "Always label return percentages (e.g., 12%) as historical/indicative estimates, not assured outcomes.", "Anchor any pitched SIP amount to information gathered about the customer's income, savings capacity, and goal, rather than presenting multiple generic amount tiers.", "Slow down and simplify delivery — use one clear, relevant illustration matched to the customer's context rather than three overlapping examples.", "Confirm the customer's actual goal (retirement, short-term, wealth accumulation) before deciding tenure and amount, and then recommend rather than merely present options.", "End with a clearer summary of what was agreed (amount, tenure, next call time) to leave the customer with confidence rather than the current vague ending."]}, {"date": "2026-08-08", "agent": "Archana", "call_number": "1", "language": "hi", "notes": "", "score": 2.0, "summary": "The agent ignored the customer's explicit request to deactivate an unused account and pushed a generic SIP/mutual fund pitch with confusing, unprofiled figures, leaving the customer more disengaged and citing being busy at the end.", "strengths": ["Agent attempted to pick up on a passing mention of retirement planning to pivot the pitch", "Offered a low, accessible entry point (₹5,000/month) rather than an unrealistically high figure"], "issues": ["Customer clearly stated 'मुझे कोई इंटरेस्ट नहीं... डिएक्टिवेट हो जाए तो कर दें' (wants deactivation, no interest) but agent proceeded straight into a SIP sales pitch anyway", "Conceptually confused framing presenting mutual funds as a separate, better-performing option than SIP ('वहीं मूचल फैंड आप ऐसा ही... मूचल फैंड में करेंगे तो वह अच्छा रिटर्न देती है') when SIP is simply a mode of investing in a mutual fund", "No profiling of the customer's actual income/capacity was done (customer runs a small shop) before arbitrarily proposing ₹5,000/month", "Multiple inconsistent, unexplained figures thrown together (5 years → ₹3 lakh, 10 years → ₹6 lakh, comparisons to FD returns at 6-3.6%) with no clear indicative/historical caveat on the 10-12% return claim", "When customer said 'नहीं जानता मैं कुछ भी इसके बारे में' (I don't know anything about this), the agent responded with more jargon and numbers instead of simplifying", "Call ends without any concrete next step — customer disengages citing being busy, with no scheduled follow-up secured"], "improvements": ["Acknowledge and act on the customer's stated intent (deactivation/no interest) before attempting any new pitch, or ask permission before pivoting", "Clarify SIP as a mode of investing within mutual funds, not a competing product, to avoid false distinctions", "Base any proposed investment amount on the customer's actual income/occupation context gathered through questions, not an arbitrary default figure", "Simplify explanation to one clear illustrative example when the customer admits unfamiliarity, rather than adding more numbers and comparisons", "Always label return percentages as indicative/historical, not certainties", "End with a specific, agent-owned next step (e.g., a scheduled callback time) rather than leaving the call open-ended"]}, {"date": "2026-08-08", "agent": "Archana", "call_number": "2", "language": "hi", "notes": "", "score": 3.0, "summary": "The agent gathered some basic profiling (prior platform, reason for churn, occupation) but then delivered a disorganized, jargon-heavy explanation of the market and confusingly blended IPO/stock-selection criteria with SIP mechanics, never using concrete figures or amounts even after the customer signaled clear buying intent.", "strengths": ["Agent probed why the customer stopped investing (loss on Groww) and used the 'discount broking, no support' framing to differentiate the full-service offering.", "Agent asked about occupation and prior trading experience early in the call.", "When the customer asked for trading info, the agent attempted to respond to that specific request rather than ignoring it.", "Gave the customer a concrete immediate action (download the IIFL app) rather than leaving things totally open-ended."], "issues": ["The market explanation ('अर्थमार्केट... लॉक टर्म और इंट्रोडे... ऑप्शन... कमुडिटी मार्केट') was a rapid, unstructured dump of categories with no tailoring to the customer's stated need for 'थोड़ा सा information'.", "When the customer explicitly asked about SIP/mutual funds, the agent's answer conflated SIP with IPO/stock-selection criteria ('चीजें देखते हैं... कितना return दे सकती है company... उसमें हम SIP punch करवाते हैं') instead of clearly explaining what SIP is.", "No specific amount, tenure, or return figure was ever proposed despite the customer clearly signaling readiness ('मैं इन्वेस्टमेंट का मन बना लो')  — a strong buying signal that went unexploited.", "Returns were referenced only vaguely ('कितना return दे सकती है') with no indicative percentage or explicit historical/indicative caveat.", "No profiling of investment capacity (how much the customer can invest, goals/timeline) was done before or after the buying signal.", "The close was loose: 'download the app, subscribe, I'll guide you on call' — no fixed date/time for the next call was set."], "improvements": ["When a customer asks specifically about SIP, explain it as a mode of investing in mutual funds — separate from stock/IPO selection criteria — with a simple, accurate explanation.", "Immediately capitalize on the buying signal ('main investment ka mann bana leta hoon') by proposing a specific, profiled SIP/investment amount and asking about the customer's monthly investable surplus.", "Replace the generic dump of market segments (intraday/options/commodity) with a focused explanation matched to what the customer actually asked for.", "Always label any return/growth figures as indicative/historical rather than implying assured outcomes.", "End the call with a specific, scheduled next step (exact day/time for the follow-up call) rather than an open-ended 'I'll call after you subscribe.'"]}, {"date": "2026-08-08", "agent": "Archana", "call_number": "3", "language": "hi", "notes": "", "score": 2.0, "summary": "The agent conducted a rambling, poorly structured pitch about reactivating a dormant demat account, with vague figures, unexplained jargon, and no clear profiling-driven recommendation, ending with a loose follow-up with no concrete date/time.", "strengths": ["Agent did ask a few basic qualifying questions (occupation, reason for not investing).", "Agent attempted to explain SIP tenure impact on returns at a high level."], "issues": ["Returns are stated inconsistently and without clear caveats: '10 se 12 percent ka return expect karte hain' is thrown in loosely alongside confusing 'ek lakh ke investment' and '5 lakh' figures that don't logically connect.", "When the customer essentially asks the agent to recommend a tenure ('konsi tenure mein karna chahiye'), the agent deflects by saying she'll arrange a callback from the mutual fund department instead of giving an expert recommendation herself.", "No concrete SIP amount is pitched grounded in the customer's actual capacity — the agent asks the customer 'kitna kar sakte hain' instead of proposing a grounded figure.", "The closing is vague: 'yeh number jyada naam se... theek hai theek hai thank you' — no specific date/time for the follow-up call is committed to.", "Agent asks 'aap baat kahan se kar rahe hain' very late in the call, indicating she hadn't captured basic customer context earlier despite the call already covering SIP planning.", "Explanation of fund selection ('jinka previous accha rahega... aane wale time par unki growth accha ho') is generic and not tied to any specific fund data or the customer's goals.", "The overall speech is halting and unclear, undermining credibility and making it hard for the customer to follow the pitch."], "improvements": ["Proactively recommend an investment tenure and SIP amount based on the customer's stated income/job status rather than pushing the decision back to her.", "Present return figures with a single clear, precise example (e.g., 'if you invest ₹X for Y years at a historically indicative Z% return, you'd have ₹__') rather than multiple loosely connected numbers.", "Capture key context (location, income bracket, monthly saving capacity) early in the call, not as an afterthought near the end.", "Avoid deferring fund selection guidance entirely to a future callback — give the customer at least a concrete illustrative recommendation now to maintain momentum.", "End with a specific, agent-owned next step: an exact date and time for the callback, confirmed with the customer, rather than a vague sign-off.", "Clean up delivery — speak in complete, confident sentences and avoid trailing off or restating half-formed ideas, which erodes trust."]}, {"date": "2026-08-07", "agent": "Jaya", "call_number": "4", "language": "hi", "notes": "", "score": 2.0, "summary": "The agent delivers a confused, jargon-heavy pitch mixing demat accounts, mutual funds, and SIPs without clear distinction, cites inconsistent and un-caveated return figures, and does minimal customer profiling before pushing arbitrary investment amounts.", "strengths": ["Agent does eventually ask about the customer's occupation ('अब कहां पर जॉब करते हैं'), showing a token attempt at profiling.", "Agent secures a specific callback time (7 PM) at the end rather than leaving it fully open-ended."], "issues": ["Amounts pitched shift arbitrarily from '500 per month' to '1000' to '2000 per month for 10 years' with no explanation tied to the customer's capacity ('अगर आप थाउजन... अगर ऐसा है आप टू थाउजन पर मंत से देखेंगे').", "Returns are stated as fixed outcomes with no indicative/historical caveat ('इस पर रिटर्न जो आपका दो लाख आठ हजार मिलेगा').", "Conflates demat platform, mutual funds, and SIPs as if interchangeable/alternative products rather than clarifying SIP is simply a mode of investing in a mutual fund.", "Customer's stated context (working in a technical field) is acknowledged ('ओके ओके ठीक है') but never used to personalize the pitch.", "No qualification of customer's actual investable capacity, prior market experience, or goals before proposing figures.", "Delivery is halting and unclear throughout, with garbled/incomplete sentences that would confuse even a native listener.", "The math and terminology (e.g., referencing 'Nifty 500' oddly in context of a ₹500/month SIP) are muddled, suggesting factual confidence issues.", "No genuine differentiators of the platform are mentioned; the call is essentially a generic SIP pitch."], "improvements": ["Establish the customer's investment experience, current holdings, and monthly investable surplus before proposing any SIP amount.", "Pick one consistent amount and tenure to illustrate, and clearly ground it in the customer's stated capacity rather than switching numbers mid-call.", "Always label return projections as indicative/historical estimates, not guaranteed outcomes.", "Avoid conflating distinct concepts (demat account, mutual fund, SIP) — clearly explain SIP as a mode of investing in a mutual fund.", "Use any context gathered (e.g., occupation) to tailor the recommendation instead of asking and then ignoring it.", "Practice clear, fluent delivery so figures and product names are stated with confidence and precision.", "End the call with a concrete agenda for the follow-up call (e.g., what will be discussed at 7 PM), not just a vague time confirmation."]}];
+const DATA = [{"date": "2026-08-06", "agent": "Shantilal", "call_number": "", "language": "hi", "notes": "", "score": 2.0, "summary_en": "", "summary_hi": "", "strengths_en": [], "strengths_hi": [], "issues_en": [], "issues_hi": [], "improvements_en": [], "improvements_hi": []}, {"date": "2026-08-06", "agent": "Shantilal", "call_number": "", "language": "hi", "notes": "", "score": 2.0, "summary_en": "", "summary_hi": "", "strengths_en": [], "strengths_hi": [], "issues_en": [], "issues_hi": [], "improvements_en": [], "improvements_hi": []}, {"date": "2026-08-06", "agent": "Poonam", "call_number": "", "language": "hi", "notes": "Lead | non DM", "score": 3.0, "summary_en": "", "summary_hi": "", "strengths_en": [], "strengths_hi": [], "issues_en": [], "issues_hi": [], "improvements_en": [], "improvements_hi": []}, {"date": "2026-08-07", "agent": "Jaya", "call_number": "2", "language": "hi", "notes": "", "score": 2.0, "summary_en": "", "summary_hi": "", "strengths_en": [], "strengths_hi": [], "issues_en": [], "issues_hi": [], "improvements_en": [], "improvements_hi": []}, {"date": "2026-08-07", "agent": "Jaya", "call_number": "3", "language": "hi", "notes": "", "score": 1.0, "summary_en": "", "summary_hi": "", "strengths_en": [], "strengths_hi": [], "issues_en": [], "issues_hi": [], "improvements_en": [], "improvements_hi": []}, {"date": "2026-08-03", "agent": "Sagar", "call_number": "1", "language": "hi", "notes": "", "score": 2.0, "summary_en": "", "summary_hi": "", "strengths_en": [], "strengths_hi": [], "issues_en": [], "issues_hi": [], "improvements_en": [], "improvements_hi": []}, {"date": "2026-08-07", "agent": "Jaya", "call_number": "3", "language": "hi", "notes": "", "score": 3.0, "summary_en": "", "summary_hi": "", "strengths_en": [], "strengths_hi": [], "issues_en": [], "issues_hi": [], "improvements_en": [], "improvements_hi": []}, {"date": "2026-08-08", "agent": "Archana", "call_number": "1", "language": "hi", "notes": "", "score": 2.0, "summary_en": "", "summary_hi": "", "strengths_en": [], "strengths_hi": [], "issues_en": [], "issues_hi": [], "improvements_en": [], "improvements_hi": []}, {"date": "2026-08-08", "agent": "Archana", "call_number": "2", "language": "hi", "notes": "", "score": 3.0, "summary_en": "", "summary_hi": "", "strengths_en": [], "strengths_hi": [], "issues_en": [], "issues_hi": [], "improvements_en": [], "improvements_hi": []}, {"date": "2026-08-08", "agent": "Archana", "call_number": "3", "language": "hi", "notes": "", "score": 2.0, "summary_en": "", "summary_hi": "", "strengths_en": [], "strengths_hi": [], "issues_en": [], "issues_hi": [], "improvements_en": [], "improvements_hi": []}, {"date": "2026-08-07", "agent": "Jaya", "call_number": "4", "language": "hi", "notes": "", "score": 2.0, "summary_en": "", "summary_hi": "", "strengths_en": [], "strengths_hi": [], "issues_en": [], "issues_hi": [], "improvements_en": [], "improvements_hi": []}];
+const AGENT_TEAM = {};   // { agent_name: {team, manager} }
+let LANG = 'en';
+
+function setLang(lang) {
+  LANG = lang;
+  document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
+  document.getElementById('langHiBtn').classList.toggle('active', lang === 'hi');
+  const sel = document.getElementById('tableAgentFilter');
+  renderTable(sel ? sel.value : '__all__');
+  if (window.__openCallIdx !== undefined && window.__openCallIdx !== null) {
+    openModal(DATA[window.__openCallIdx], window.__openCallIdx);
+  }
+}
+
+// Reads e.g. pick(call, 'summary') -> call.summary_hi if LANG is hi and it
+// has content, else falls back to English (covers older rows scored before
+// bilingual output existed).
+function pick(call, base) {
+  const localized = call[base + '_' + LANG];
+  const isEmpty = localized === undefined || localized === null || localized === '' ||
+    (Array.isArray(localized) && localized.length === 0);
+  return isEmpty ? call[base + '_en'] : localized;
+}
 
 function scoreColor(s) {
   if (s === null || s === undefined || isNaN(s)) return "#888";
@@ -117,10 +173,15 @@ function scoreColor(s) {
 }
 
 function esc(s) {
-  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return (s || '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function openModal(call) {
+function teamOf(agent) {
+  return (AGENT_TEAM[agent] && AGENT_TEAM[agent].team) || 'Unassigned';
+}
+
+function openModal(call, idx) {
+  window.__openCallIdx = idx;
   const c = scoreColor(call.score);
   const listOrNone = (items, cls) => items && items.length
     ? `<ul>${items.map(i => `<li class="${cls}">${esc(i)}</li>`).join('')}</ul>`
@@ -130,9 +191,15 @@ function openModal(call) {
     <div class="modal-header">
       <div>
         <h3>${esc(call.agent)}</h3>
-        <div class="modal-meta">${esc(call.date)}${call.call_number ? ' &bull; Call #' + esc(call.call_number) : ''}${call.language ? ' &bull; ' + esc(call.language) : ''}</div>
+        <div class="modal-meta">${esc(call.date)}${call.call_number ? ' &bull; Call #' + esc(call.call_number) : ''} &bull; ${esc(teamOf(call.agent))}</div>
       </div>
-      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="lang-toggle">
+          <button class="${LANG==='en'?'active':''}" onclick="setLang('en')">EN</button>
+          <button class="${LANG==='hi'?'active':''}" onclick="setLang('hi')">हिंदी</button>
+        </div>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
     </div>
     <div class="modal-score">
       <span class="num" style="color:${c}">${call.score ?? '-'}</span>
@@ -140,19 +207,19 @@ function openModal(call) {
     </div>
     <div class="modal-section">
       <h4>Summary</h4>
-      <div style="font-size:13.5px; line-height:1.5;">${esc(call.summary) || '<span style="color:var(--muted)">No summary</span>'}</div>
+      <div style="font-size:13.5px; line-height:1.5;">${esc(pick(call,'summary')) || '<span style="color:var(--muted)">No summary</span>'}</div>
     </div>
     <div class="modal-section">
       <h4>Strengths</h4>
-      ${listOrNone(call.strengths, 'tag-strength')}
+      ${listOrNone(pick(call,'strengths'), 'tag-strength')}
     </div>
     <div class="modal-section">
       <h4>Issues</h4>
-      ${listOrNone(call.issues, 'tag-issue')}
+      ${listOrNone(pick(call,'issues'), 'tag-issue')}
     </div>
     <div class="modal-section">
       <h4>Improvements</h4>
-      ${listOrNone(call.improvements, 'tag-improve')}
+      ${listOrNone(pick(call,'improvements'), 'tag-improve')}
     </div>
     ${call.notes ? `<div class="modal-section"><h4>Notes</h4><div style="font-size:13px;">${esc(call.notes)}</div></div>` : ''}
   `;
@@ -160,6 +227,7 @@ function openModal(call) {
 }
 
 function closeModal() {
+  window.__openCallIdx = null;
   document.getElementById('modalBackdrop').classList.remove('open');
 }
 
@@ -167,6 +235,57 @@ document.getElementById('modalBackdrop').addEventListener('click', (e) => {
   if (e.target.id === 'modalBackdrop') closeModal();
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+function renderTable(filterAgent) {
+  const rows = (filterAgent === '__all__' ? DATA : DATA.filter(d => d.agent === filterAgent))
+    .slice().sort((a,b)=> b.date.localeCompare(a.date));
+  document.getElementById('callsTableBody').innerHTML = rows.map(d => `
+    <tr data-idx="${DATA.indexOf(d)}">
+      <td>${esc(d.date)}</td>
+      <td>${esc(d.agent)}</td>
+      <td><span class="score-pill" style="background:${scoreColor(d.score)}22; color:${scoreColor(d.score)};">${d.score ?? '-'}</span></td>
+      <td class="wrap">${esc(pick(d,'summary'))}</td>
+    </tr>`).join('');
+  document.querySelectorAll('#callsTableBody tr').forEach(tr => {
+    tr.addEventListener('click', () => openModal(DATA[+tr.dataset.idx], +tr.dataset.idx));
+  });
+}
+
+function renderTeamSummary() {
+  const teams = {};
+  DATA.forEach(d => {
+    const t = teamOf(d.agent);
+    teams[t] = teams[t] || { calls: 0, scoreSum: 0, scored: 0, agents: new Set(),
+      manager: (AGENT_TEAM[d.agent] && AGENT_TEAM[d.agent].manager) || '' };
+    teams[t].calls++;
+    teams[t].agents.add(d.agent);
+    if (d.score != null) { teams[t].scoreSum += d.score; teams[t].scored++; }
+  });
+  const teamNames = Object.keys(teams).sort();
+  return `
+    <div class="panel" style="margin-bottom:20px;">
+      <h2>Team summary</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Team</th><th>Manager</th><th>Agents</th><th>Calls</th><th>Avg score</th></tr></thead>
+          <tbody>
+            ${teamNames.map(t => {
+              const info = teams[t];
+              const avg = info.scored ? (info.scoreSum / info.scored).toFixed(2) : '-';
+              return `<tr>
+                <td>${esc(t)}</td>
+                <td>${esc(info.manager) || '<span style="color:var(--muted)">&mdash;</span>'}</td>
+                <td>${info.agents.size}</td>
+                <td>${info.calls}</td>
+                <td><span class="score-pill" style="background:${scoreColor(+avg)}22; color:${scoreColor(+avg)};">${avg}</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
 
 function render() {
   const el = document.getElementById('content');
@@ -178,6 +297,7 @@ function render() {
   const agents = [...new Set(DATA.map(d => d.agent))].sort();
   const scored = DATA.filter(d => d.score != null);
   const overallAvg = scored.length ? (scored.reduce((a,d)=>a+d.score,0) / scored.length).toFixed(2) : '-';
+  const hasTeams = Object.keys(AGENT_TEAM).length > 0;
 
   el.innerHTML = `
     <div class="cards">
@@ -185,9 +305,10 @@ function render() {
       <div class="card"><div class="label">Agents tracked</div><div class="value">${agents.length}</div></div>
       <div class="card"><div class="label">Overall avg score</div><div class="value">${overallAvg}</div></div>
     </div>
+    ${hasTeams ? renderTeamSummary() : ''}
     <div class="grid">
       <div class="panel">
-        <div class="agent-select">
+        <div class="filter-row">
           <label style="color:var(--muted); font-size:13px;">Agent trend:</label>
           <select id="agentPicker">
             <option value="__all__">All agents (avg by day)</option>
@@ -202,7 +323,7 @@ function render() {
       </div>
     </div>
     <div class="panel">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="filter-row" style="justify-content:space-between;">
         <h2 style="margin:0;">Calls</h2>
         <select id="tableAgentFilter">
           <option value="__all__">All agents</option>
@@ -218,23 +339,7 @@ function render() {
     </div>
   `;
 
-  function renderTable(filterAgent) {
-    const rows = (filterAgent === '__all__' ? DATA : DATA.filter(d => d.agent === filterAgent))
-      .slice().sort((a,b)=> b.date.localeCompare(a.date));
-    document.getElementById('callsTableBody').innerHTML = rows.map((d, i) => `
-      <tr data-idx="${DATA.indexOf(d)}">
-        <td>${esc(d.date)}</td>
-        <td>${esc(d.agent)}</td>
-        <td><span class="score-pill" style="background:${scoreColor(d.score)}22; color:${scoreColor(d.score)};">${d.score ?? '-'}</span></td>
-        <td>${esc(d.summary)}</td>
-      </tr>`).join('');
-    document.querySelectorAll('#callsTableBody tr').forEach(tr => {
-      tr.addEventListener('click', () => openModal(DATA[+tr.dataset.idx]));
-    });
-  }
-
-  // Table and modal never depend on charts succeeding — render this first,
-  // so a charting problem can never take the whole page down with it.
+  // Table/modal render first and don't depend on charts succeeding.
   document.getElementById('tableAgentFilter').addEventListener('change', e => renderTable(e.target.value));
   renderTable('__all__');
 
@@ -242,7 +347,8 @@ function render() {
     Chart.defaults.color = '#9297a3';
     Chart.defaults.borderColor = '#262a35';
 
-    let trendChart;
+    let trendChart, distChart;
+
     function drawTrend(filterAgent) {
       const rows = filterAgent === '__all__' ? DATA : DATA.filter(d => d.agent === filterAgent);
       const byDate = {};
@@ -280,32 +386,44 @@ function render() {
       });
     }
 
-    const counts = new Array(10).fill(0);
-    DATA.forEach(d => { if (d.score >= 1 && d.score <= 10) counts[Math.round(d.score)-1]++; });
-    new Chart(document.getElementById('distChart'), {
-      type: 'bar',
-      data: {
-        labels: ['1','2','3','4','5','6','7','8','9','10'],
-        datasets: [{
-          data: counts,
-          backgroundColor: ['1','2','3','4','5','6','7','8','9','10'].map((_,i)=> scoreColor(i+1)),
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-      }
-    });
+    // FIX: distribution chart now filters by the same agent selection as
+    // the trend chart, instead of always showing all agents regardless of
+    // the dropdown.
+    function drawDist(filterAgent) {
+      const rows = filterAgent === '__all__' ? DATA : DATA.filter(d => d.agent === filterAgent);
+      const counts = new Array(10).fill(0);
+      rows.forEach(d => { if (d.score >= 1 && d.score <= 10) counts[Math.round(d.score)-1]++; });
+      if (distChart) distChart.destroy();
+      distChart = new Chart(document.getElementById('distChart'), {
+        type: 'bar',
+        data: {
+          labels: ['1','2','3','4','5','6','7','8','9','10'],
+          datasets: [{
+            data: counts,
+            backgroundColor: ['1','2','3','4','5','6','7','8','9','10'].map((_,i)=> scoreColor(i+1)),
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
 
-    document.getElementById('agentPicker').addEventListener('change', e => drawTrend(e.target.value));
+    document.getElementById('agentPicker').addEventListener('change', e => {
+      drawTrend(e.target.value);
+      drawDist(e.target.value);
+    });
     drawTrend('__all__');
+    drawDist('__all__');
   } catch (err) {
     console.error('Chart rendering failed:', err);
     document.getElementById('trendChart').parentElement.innerHTML =
       '<div class="empty" style="padding:16px;">Chart failed to render (' + esc(err.message) + ')</div>';
-    document.getElementById('distChart').parentElement.innerHTML =
+    const distEl = document.getElementById('distChart');
+    if (distEl) distEl.parentElement.innerHTML =
       '<div class="empty" style="padding:16px;">Chart failed to render</div>';
   }
 }
