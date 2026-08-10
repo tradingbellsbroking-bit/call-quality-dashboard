@@ -147,8 +147,7 @@ function setLang(lang) {
   LANG = lang;
   document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
   document.getElementById('langHiBtn').classList.toggle('active', lang === 'hi');
-  const sel = document.getElementById('tableAgentFilter');
-  renderTable(sel ? sel.value : '__all__');
+  renderTable();
   if (window.__openCallIdx !== undefined && window.__openCallIdx !== null) {
     openModal(DATA[window.__openCallIdx], window.__openCallIdx);
   }
@@ -236,9 +235,8 @@ document.getElementById('modalBackdrop').addEventListener('click', (e) => {
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-function renderTable(filterAgent) {
-  const rows = (filterAgent === '__all__' ? DATA : DATA.filter(d => d.agent === filterAgent))
-    .slice().sort((a,b)=> b.date.localeCompare(a.date));
+function renderTable() {
+  const rows = filteredData().slice().sort((a,b)=> b.date.localeCompare(a.date));
   document.getElementById('callsTableBody').innerHTML = rows.map(d => `
     <tr data-idx="${DATA.indexOf(d)}">
       <td>${esc(d.date)}</td>
@@ -264,10 +262,10 @@ function renderTeamSummary() {
   const teamNames = Object.keys(teams).sort();
   return `
     <div class="panel" style="margin-bottom:20px;">
-      <h2>Team summary</h2>
+      <h2>Branch summary</h2>
       <div class="table-scroll">
         <table>
-          <thead><tr><th>Team</th><th>Manager</th><th>Agents</th><th>Calls</th><th>Avg score</th></tr></thead>
+          <thead><tr><th>Branch</th><th>Manager</th><th>Agents</th><th>Calls</th><th>Avg score</th></tr></thead>
           <tbody>
             ${teamNames.map(t => {
               const info = teams[t];
@@ -287,6 +285,116 @@ function renderTeamSummary() {
   `;
 }
 
+// Single shared filter state driving the trend chart, distribution chart,
+// and calls table all at once.
+let selectedBranch = '__all__';
+let selectedAgent = '__all__';
+
+function filteredData() {
+  return DATA.filter(d =>
+    (selectedBranch === '__all__' || teamOf(d.agent) === selectedBranch) &&
+    (selectedAgent === '__all__' || d.agent === selectedAgent)
+  );
+}
+
+function agentsInBranch(branch) {
+  const inBranch = branch === '__all__' ? DATA : DATA.filter(d => teamOf(d.agent) === branch);
+  return [...new Set(inBranch.map(d => d.agent))].sort();
+}
+
+function rebuildAgentDropdown() {
+  const agentSel = document.getElementById('agentPicker');
+  const names = agentsInBranch(selectedBranch);
+  if (selectedAgent !== '__all__' && !names.includes(selectedAgent)) selectedAgent = '__all__';
+  agentSel.innerHTML =
+    `<option value="__all__">All agents${selectedBranch === '__all__' ? '' : ' in this branch'}</option>` +
+    names.map(a => `<option value="${esc(a)}" ${a===selectedAgent?'selected':''}>${esc(a)}</option>`).join('');
+}
+
+function applyFilters() {
+  renderTable();
+  drawTrend();
+  drawDist();
+}
+
+function renderFilterPanel(branches) {
+  return `
+    <div class="filter-row">
+      <label style="color:var(--muted); font-size:13px;">Branch:</label>
+      <select id="branchPicker">
+        <option value="__all__">All branches</option>
+        ${branches.map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('')}
+      </select>
+      <label style="color:var(--muted); font-size:13px;">Agent:</label>
+      <select id="agentPicker"></select>
+    </div>
+  `;
+}
+
+let trendChart, distChart;
+
+function drawTrend() {
+  const rows = filteredData();
+  const byDate = {};
+  rows.forEach(d => {
+    if (d.score == null) return;
+    byDate[d.date] = byDate[d.date] || [];
+    byDate[d.date].push(d.score);
+  });
+  const dates = Object.keys(byDate).sort();
+  const avgs = dates.map(dt => {
+    const vals = byDate[dt];
+    return +(vals.reduce((a,b)=>a+b,0) / vals.length).toFixed(2);
+  });
+  const label = selectedAgent !== '__all__' ? selectedAgent
+    : selectedBranch !== '__all__' ? selectedBranch : 'All agents';
+  if (trendChart) trendChart.destroy();
+  trendChart = new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [{
+        label,
+        data: avgs,
+        borderColor: '#7c9eff',
+        backgroundColor: '#7c9eff33',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: { y: { min: 0, max: 10, ticks: { stepSize: 2 } } },
+      plugins: { legend: { display: false } },
+    }
+  });
+}
+
+function drawDist() {
+  const rows = filteredData();
+  const counts = new Array(10).fill(0);
+  rows.forEach(d => { if (d.score >= 1 && d.score <= 10) counts[Math.round(d.score)-1]++; });
+  if (distChart) distChart.destroy();
+  distChart = new Chart(document.getElementById('distChart'), {
+    type: 'bar',
+    data: {
+      labels: ['1','2','3','4','5','6','7','8','9','10'],
+      datasets: [{
+        data: counts,
+        backgroundColor: ['1','2','3','4','5','6','7','8','9','10'].map((_,i)=> scoreColor(i+1)),
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+}
+
 function render() {
   const el = document.getElementById('content');
   if (!DATA.length) {
@@ -294,7 +402,7 @@ function render() {
     return;
   }
 
-  const agents = [...new Set(DATA.map(d => d.agent))].sort();
+  const branches = [...new Set(DATA.map(d => teamOf(d.agent)))].sort();
   const scored = DATA.filter(d => d.score != null);
   const overallAvg = scored.length ? (scored.reduce((a,d)=>a+d.score,0) / scored.length).toFixed(2) : '-';
   const hasTeams = Object.keys(AGENT_TEAM).length > 0;
@@ -302,19 +410,16 @@ function render() {
   el.innerHTML = `
     <div class="cards">
       <div class="card"><div class="label">Total calls scored</div><div class="value">${DATA.length}</div></div>
-      <div class="card"><div class="label">Agents tracked</div><div class="value">${agents.length}</div></div>
+      <div class="card"><div class="label">Agents tracked</div><div class="value">${[...new Set(DATA.map(d=>d.agent))].length}</div></div>
       <div class="card"><div class="label">Overall avg score</div><div class="value">${overallAvg}</div></div>
     </div>
     ${hasTeams ? renderTeamSummary() : ''}
+    <div class="panel" style="margin-bottom:20px;">
+      ${renderFilterPanel(branches)}
+    </div>
     <div class="grid">
       <div class="panel">
-        <div class="filter-row">
-          <label style="color:var(--muted); font-size:13px;">Agent trend:</label>
-          <select id="agentPicker">
-            <option value="__all__">All agents (avg by day)</option>
-            ${agents.map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('')}
-          </select>
-        </div>
+        <h2>Score trend</h2>
         <div class="chart-box"><canvas id="trendChart"></canvas></div>
       </div>
       <div class="panel">
@@ -323,13 +428,7 @@ function render() {
       </div>
     </div>
     <div class="panel">
-      <div class="filter-row" style="justify-content:space-between;">
-        <h2 style="margin:0;">Calls</h2>
-        <select id="tableAgentFilter">
-          <option value="__all__">All agents</option>
-          ${agents.map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('')}
-        </select>
-      </div>
+      <h2 style="margin:0 0 14px;">Calls</h2>
       <div class="table-scroll">
         <table>
           <thead><tr><th>Date</th><th>Agent</th><th>Score</th><th>Summary</th></tr></thead>
@@ -339,85 +438,27 @@ function render() {
     </div>
   `;
 
+  rebuildAgentDropdown();
+
+  document.getElementById('branchPicker').addEventListener('change', e => {
+    selectedBranch = e.target.value;
+    selectedAgent = '__all__';
+    rebuildAgentDropdown();
+    applyFilters();
+  });
+  document.getElementById('agentPicker').addEventListener('change', e => {
+    selectedAgent = e.target.value;
+    applyFilters();
+  });
+
   // Table/modal render first and don't depend on charts succeeding.
-  document.getElementById('tableAgentFilter').addEventListener('change', e => renderTable(e.target.value));
-  renderTable('__all__');
+  renderTable();
 
   try {
     Chart.defaults.color = '#9297a3';
     Chart.defaults.borderColor = '#262a35';
-
-    let trendChart, distChart;
-
-    function drawTrend(filterAgent) {
-      const rows = filterAgent === '__all__' ? DATA : DATA.filter(d => d.agent === filterAgent);
-      const byDate = {};
-      rows.forEach(d => {
-        if (d.score == null) return;
-        byDate[d.date] = byDate[d.date] || [];
-        byDate[d.date].push(d.score);
-      });
-      const dates = Object.keys(byDate).sort();
-      const avgs = dates.map(dt => {
-        const vals = byDate[dt];
-        return +(vals.reduce((a,b)=>a+b,0) / vals.length).toFixed(2);
-      });
-      if (trendChart) trendChart.destroy();
-      trendChart = new Chart(document.getElementById('trendChart'), {
-        type: 'line',
-        data: {
-          labels: dates,
-          datasets: [{
-            label: filterAgent === '__all__' ? 'All agents' : filterAgent,
-            data: avgs,
-            borderColor: '#7c9eff',
-            backgroundColor: '#7c9eff33',
-            tension: 0.3,
-            fill: true,
-            pointRadius: 3,
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { y: { min: 0, max: 10, ticks: { stepSize: 2 } } },
-          plugins: { legend: { display: false } },
-        }
-      });
-    }
-
-    // FIX: distribution chart now filters by the same agent selection as
-    // the trend chart, instead of always showing all agents regardless of
-    // the dropdown.
-    function drawDist(filterAgent) {
-      const rows = filterAgent === '__all__' ? DATA : DATA.filter(d => d.agent === filterAgent);
-      const counts = new Array(10).fill(0);
-      rows.forEach(d => { if (d.score >= 1 && d.score <= 10) counts[Math.round(d.score)-1]++; });
-      if (distChart) distChart.destroy();
-      distChart = new Chart(document.getElementById('distChart'), {
-        type: 'bar',
-        data: {
-          labels: ['1','2','3','4','5','6','7','8','9','10'],
-          datasets: [{
-            data: counts,
-            backgroundColor: ['1','2','3','4','5','6','7','8','9','10'].map((_,i)=> scoreColor(i+1)),
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
-        }
-      });
-    }
-
-    document.getElementById('agentPicker').addEventListener('change', e => {
-      drawTrend(e.target.value);
-      drawDist(e.target.value);
-    });
-    drawTrend('__all__');
-    drawDist('__all__');
+    drawTrend();
+    drawDist();
   } catch (err) {
     console.error('Chart rendering failed:', err);
     document.getElementById('trendChart').parentElement.innerHTML =
