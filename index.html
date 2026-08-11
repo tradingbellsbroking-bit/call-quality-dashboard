@@ -130,7 +130,7 @@
       <button id="langHiBtn" onclick="setLang('hi')">हिंदी</button>
     </div>
   </div>
-  <div class="subtitle">Generated from data/calls.csv &mdash; rerun <code>python dashboard.py</code> to refresh. Click any row for full details.</div>
+  <div class="subtitle"></div>
 
   <div id="content"></div>
 
@@ -140,7 +140,7 @@
 
 <script>
 const DATA = [{"date": "2026-08-08", "agent": "Archana", "call_number": "1", "language": "hi", "notes": "", "score": 2.0, "summary_en": "The agent rambled through an unstructured mix of stock market and mutual fund/SIP talk without tying it to the customer's stated goal, leaving the customer disengaged with no concrete next step secured.", "summary_hi": "एजेंट ने स्टॉक मार्केट और म्यूचुअल फंड/SIP की बातें बिना किसी संरचना के मिलाकर बताईं, ग्राहक के बताए गए लक्ष्य से जोड़े बिना, जिससे ग्राहक अंत में विरक्त हो गया और कोई ठोस अगला कदम तय नहीं हुआ।", "strengths_en": ["Agent did probe and surface that the customer wants to plan an SIP for his child's education, a useful profiling data point.", "The illustrative math (₹5,000/month for 5 years = ₹3 lakh) was arithmetically correct."], "strengths_hi": ["एजेंट ने पूछताछ करके यह जान लिया कि ग्राहक अपने बच्चे की पढ़ाई के लिए SIP प्लान करना चाहता है, जो एक उपयोगी प्रोफाइलिंग जानकारी है।", "उदाहरण का गणित (₹5,000/माह × 5 साल = ₹3 लाख) अंकगणितीय रूप से सही था।"], "issues_en": ["Agent jumbled stock trading, short-term flipping, mutual funds, SIP and FD comparisons into one confusing ramble instead of addressing the customer's specific child-education goal.", "Return figures (10-12%, FD 6-7%) were stated without any clear 'indicative/historical, not guaranteed' caveat.", "The call ends with the customer saying 'thoda busy hoon' with no scheduled follow-up, showing engagement dropped rather than being built on."], "issues_hi": ["एजेंट ने स्टॉक ट्रेडिंग, शॉर्ट-टर्म फ्लिपिंग, म्यूचुअल फंड, SIP और FD की तुलना को एक साथ उलझा दिया, बजाय इसके कि ग्राहक के बच्चे की पढ़ाई वाले विशिष्ट लक्ष्य पर ध्यान केंद्रित करें।", "रिटर्न के आंकड़े (10-12%, FD 6-7%) बिना किसी स्पष्ट 'यह अनुमानित/ऐतिहासिक है, गारंटीड नहीं' जैसी चेतावनी के बताए गए।", "कॉल का अंत ग्राहक के 'थोड़ा बिजी हूं' कहने पर हुआ, बिना किसी तय फॉलो-अप के, जिससे यह दिखता है कि जुड़ाव बढ़ने की बजाय घट गया।"], "improvements_en": ["Anchor the entire pitch on the child's education SIP goal rather than drifting into unrelated stock market chatter.", "Clearly label return percentages as historical/indicative, not assured outcomes.", "Close with a specific, agent-owned next step (e.g., a scheduled callback time) instead of letting the call trail off."], "improvements_hi": ["पूरी पिच को बच्चे की पढ़ाई के SIP लक्ष्य पर केंद्रित रखें, न कि असंबंधित स्टॉक मार्केट की बातों में भटकें।", "रिटर्न प्रतिशत को स्पष्ट रूप से ऐतिहासिक/अनुमानित बताएं, निश्चित परिणाम के रूप में नहीं।", "कॉल को एक स्पष्ट, एजेंट द्वारा तय किए गए अगले कदम (जैसे तय समय पर कॉलबैक) के साथ समाप्त करें, न कि बिना किसी निष्कर्ष के छोड़ दें।"]}, {"date": "2026-08-08", "agent": "Archana", "call_number": "2", "language": "hi", "notes": "", "score": 2.0, "summary_en": "The agent ignored the customer's specific loss experience and SIP question, instead dumping generic and confusing market jargon (cash/commodity/intraday/options) with no personalized recommendation or concrete figures.", "summary_hi": "एजेंट ने ग्राहक के विशिष्ट नुकसान के अनुभव और SIP संबंधी सवाल को नज़रअंदाज़ कर दिया, और इसके बजाय सामान्य व भ्रमित करने वाली मार्केट शब्दावली (कैश/कमोडिटी/इंट्राडे/ऑप्शन) परोस दी, बिना किसी व्यक्तिगत सुझाव या ठोस आंकड़ों के।", "strengths_en": ["Agent opened by referencing the customer's actual prior loss with another broker, showing some attempt at contextual entry.", "Agent confirmed the client ID and offered to guide app installation on-call."], "strengths_hi": ["एजेंट ने बातचीत की शुरुआत ग्राहक के किसी अन्य ब्रोकर के साथ हुए वास्तविक पूर्व नुकसान का ज़िक्र करके की, जो कुछ हद तक संदर्भ आधारित शुरुआत दिखाता है।", "एजेंट ने क्लाइंट आईडी की पुष्टि की और कॉल पर ही ऐप इंस्टॉल करने में मदद की पेशकश की।"], "issues_en": ["After learning the customer lost money and wants proper guidance, the agent launched into an unrelated, jargon-heavy lecture on cash/commodity markets and intraday vs delivery instead of addressing the SIP/mutual fund question directly.", "No specific SIP amount, fund name, or expected return figure was ever given — the pitch stayed entirely abstract ('review past 4 years return, growth, etc.') with no concrete numbers.", "The call ends with app download and password-setting instructions but no real qualification of investment goals, horizon, or capacity, and follow-up is vague ('call after 9am')."], "issues_hi": ["यह जानने के बाद कि ग्राहक ने पैसा गंवाया है और उचित मार्गदर्शन चाहता है, एजेंट ने कैश/कमोडिटी मार्केट और इंट्राडे बनाम डिलीवरी पर असंबंधित, शब्दावली-भारी व्याख्यान शुरू कर दिया, जबकि सीधे SIP/म्यूचुअल फंड के सवाल का जवाब देना चाहिए था।", "कभी भी कोई विशिष्ट SIP राशि, फंड का नाम, या अपेक्षित रिटर्न का आंकड़ा नहीं दिया गया — पूरी पिच पूरी तरह अमूर्त रही ('पिछले 4 साल का रिटर्न, ग्रोथ देखते हैं' आदि) बिना किसी ठोस संख्या के।", "कॉल ऐप डाउनलोड और पासवर्ड सेट करने के निर्देशों के साथ समाप्त होती है, लेकिन निवेश लक्ष्य, अवधि या क्षमता की कोई वास्तविक जांच नहीं हुई, और फॉलो-अप भी अस्पष्ट है ('9 बजे के बाद कॉल करें')।"], "improvements_en": ["Directly address the customer's stated goal (recovering from loss via a guided approach) with a specific SIP amount and fund suggestion instead of a generic market-types tutorial.", "Drop unrequested jargon (cash market, commodity market, intraday vs delivery) that has no bearing on the customer's SIP/mutual fund query.", "Set a precise callback time and agenda instead of a loose 'call after 9am, whenever'."], "improvements_hi": ["ग्राहक के बताए गए लक्ष्य (नुकसान से उबरने के लिए सही मार्गदर्शन) को सीधे संबोधित करें, एक विशिष्ट SIP राशि और फंड सुझाव के साथ, न कि सामान्य मार्केट-प्रकार के ट्यूटोरियल से।", "अनावश्यक शब्दावली (कैश मार्केट, कमोडिटी मार्केट, इंट्राडे बनाम डिलीवरी) हटाएं जिसका ग्राहक के SIP/म्यूचुअल फंड प्रश्न से कोई संबंध नहीं है।", "ढीले 'सुबह 9 बजे के बाद कभी भी कॉल करें' के बजाय एक सटीक कॉलबैक समय और एजेंडा तय करें।"]}, {"date": "2026-08-08", "agent": "Archana", "call_number": "3", "language": "hi", "notes": "", "score": 2.0, "summary_en": "The agent failed to profile the customer, deferred key decisions (SIP amount, company/fund choice) back to her instead of recommending, and closed with a vague 'save my number' rather than a concrete next step.", "summary_hi": "एजेंट ने ग्राहक की प्रोफाइलिंग नहीं की, मुख्य फैसले (SIP राशि, कंपनी/फंड चुनाव) ग्राहक पर वापस डाल दिए बजाय सिफारिश करने के, और कॉल को 'मेरा नंबर सेव कर लीजिए' जैसे अस्पष्ट अगले कदम पर खत्म किया।", "strengths_en": ["Attempted to simplify by giving a concrete example (₹5000/month, 15 years, ~₹9 lakh invested) rather than pure jargon.", "Briefly acknowledged market-linked variability ('मार्केट कंडीशन') instead of presenting returns as fully guaranteed."], "strengths_hi": ["शुद्ध शब्दजाल के बजाय एक ठोस उदाहरण (₹5000/माह, 15 साल, ~₹9 लाख निवेश) देकर समझाने की कोशिश की।", "रिटर्न को पूरी तरह गारंटीड बताने की बजाय संक्षेप में बाजार-आधारित उतार-चढ़ाव ('मार्केट कंडीशन') का ज़िक्र किया।"], "issues_en": ["When the customer explicitly said she had no idea how much to invest, the agent still asked her to pick amount/tenure instead of recommending one based on her profile.", "When the customer directly asked 'which company should I invest in,' the agent dodged with 'I'll arrange a callback from the mutual fund department' instead of giving an expert answer.", "The call ended with only 'save this number,' with no specific date/time for the promised callback."], "issues_hi": ["जब ग्राहक ने साफ कहा कि उसे निवेश राशि का कोई अंदाज़ा नहीं है, तब भी एजेंट ने उसे खुद राशि/अवधि चुनने को कहा, अपनी प्रोफाइल-आधारित सिफारिश देने के बजाय।", "जब ग्राहक ने सीधे पूछा 'किस कंपनी में निवेश करना चाहिए,' एजेंट ने विशेषज्ञ जवाब देने के बजाय 'म्यूचुअल फंड डिपार्टमेंट से कॉलबैक अरेंज करवा दूंगा' कहकर टाल दिया।", "कॉल केवल 'यह नंबर सेव कर लीजिए' पर खत्म हुई, वादा किए गए कॉलबैक के लिए कोई निश्चित तारीख/समय तय नहीं किया गया।"], "improvements_en": ["Use the occupation/income info gathered to proactively recommend a specific SIP amount and tenure instead of asking the customer to decide.", "Directly answer the customer's fund/company question with a concrete recommendation rather than deferring to another team.", "Close with a specific day/time for the callback and confirm it back to the customer."], "improvements_hi": ["एकत्र की गई occupation/आय जानकारी का उपयोग कर ग्राहक को खुद तय करने के बजाय एक स्पष्ट SIP राशि और अवधि की सिफारिश करें।", "फंड/कंपनी संबंधी सवाल का सीधा और ठोस जवाब दें, दूसरी टीम पर टालने के बजाय।", "कॉल को कॉलबैक के लिए एक निश्चित दिन/समय तय कर और उसे ग्राहक से कन्फर्म करके बंद करें।"]}];
-const AGENT_TEAM = {"Archana": {"team": "Beta", "manager": "Ajay"}, "Shantilal": {"team": "Sigma", "manager": "Kushagra"}};   // { agent_name: {team, manager} }
+const AGENT_TEAM = {"Shantilal": {"team": "Sigma Branch", "manager": "Kushagra"}, "Poonam": {"team": "Beta Branch", "manager": "Ajay"}};   // { agent_name: {team, manager} }
 let LANG = 'en';
 
 function setLang(lang) {
@@ -312,6 +312,7 @@ function rebuildAgentDropdown() {
 }
 
 function applyFilters() {
+  renderCards();
   renderTable();
   drawTrend();
   drawDist();
@@ -333,6 +334,26 @@ function renderFilterPanel(branches) {
 
 let trendChart, distChart;
 
+function scopeLabel() {
+  if (selectedAgent !== '__all__') return selectedAgent;
+  if (selectedBranch !== '__all__') return selectedBranch;
+  return 'All calls';
+}
+
+function renderCards() {
+  const rows = filteredData();
+  const scored = rows.filter(d => d.score != null);
+  const avg = scored.length ? (scored.reduce((a,d)=>a+d.score,0) / scored.length).toFixed(2) : '-';
+  const agentCount = [...new Set(rows.map(d => d.agent))].length;
+  const cardsEl = document.getElementById('cardsRow');
+  if (!cardsEl) return;
+  cardsEl.innerHTML = `
+    <div class="card"><div class="label">Calls scored &mdash; ${esc(scopeLabel())}</div><div class="value">${rows.length}</div></div>
+    <div class="card"><div class="label">Agents</div><div class="value">${agentCount}</div></div>
+    <div class="card"><div class="label">Avg score</div><div class="value">${avg}</div></div>
+  `;
+}
+
 function drawTrend() {
   const rows = filteredData();
   const byDate = {};
@@ -346,8 +367,7 @@ function drawTrend() {
     const vals = byDate[dt];
     return +(vals.reduce((a,b)=>a+b,0) / vals.length).toFixed(2);
   });
-  const label = selectedAgent !== '__all__' ? selectedAgent
-    : selectedBranch !== '__all__' ? selectedBranch : 'All agents';
+  const label = scopeLabel();
   if (trendChart) trendChart.destroy();
   trendChart = new Chart(document.getElementById('trendChart'), {
     type: 'line',
@@ -403,16 +423,10 @@ function render() {
   }
 
   const branches = [...new Set(DATA.map(d => teamOf(d.agent)))].sort();
-  const scored = DATA.filter(d => d.score != null);
-  const overallAvg = scored.length ? (scored.reduce((a,d)=>a+d.score,0) / scored.length).toFixed(2) : '-';
   const hasTeams = Object.keys(AGENT_TEAM).length > 0;
 
   el.innerHTML = `
-    <div class="cards">
-      <div class="card"><div class="label">Total calls scored</div><div class="value">${DATA.length}</div></div>
-      <div class="card"><div class="label">Agents tracked</div><div class="value">${[...new Set(DATA.map(d=>d.agent))].length}</div></div>
-      <div class="card"><div class="label">Overall avg score</div><div class="value">${overallAvg}</div></div>
-    </div>
+    <div class="cards" id="cardsRow"></div>
     ${hasTeams ? renderTeamSummary() : ''}
     <div class="panel" style="margin-bottom:20px;">
       ${renderFilterPanel(branches)}
@@ -451,7 +465,8 @@ function render() {
     applyFilters();
   });
 
-  // Table/modal render first and don't depend on charts succeeding.
+  // Table/cards/modal render first and don't depend on charts succeeding.
+  renderCards();
   renderTable();
 
   try {
