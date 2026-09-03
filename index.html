@@ -491,6 +491,7 @@ let selectedDateTo = '';
 let selectedScoringDate = '';
 let selectedCallCategory = '__all__';
 let selectedBlankCallFilter = '__all__';
+let selectedFlaggedFilter = '__all__';
 let hasBranchData = false;
 
 function isBlankCall(d) {
@@ -504,6 +505,15 @@ const s = d.summary_en || '';
 return s.startsWith('BCA:') || s.startsWith('BLANK CALL ALERT');
 }
 
+function isFlaggedCall(d) {
+// Calls picked up from the "Flagged Calls" Drive folder get "FL:"
+// prepended to summary_en (or "FL / BCA:" if the call is also a
+// blank call) by lib/daily_run.py's _apply_flagged_prefix — same
+// summary_en-only check as isBlankCall, for the same reason.
+const s = d.summary_en || '';
+return s.startsWith('FL:') || s.startsWith('FL / BCA:');
+}
+
 function filteredData() {
 return DATA.filter(d =>
 (selectedBranch === '__all__' || (branchOf(d.agent) || 'Unassigned') === selectedBranch) &&
@@ -513,7 +523,9 @@ return DATA.filter(d =>
 (!selectedScoringDate || (d.scored_at || '').slice(0, 10) === selectedScoringDate) &&
 (selectedCallCategory === '__all__' || (d.call_category || 'Uncategorized') === selectedCallCategory) &&
 (selectedBlankCallFilter === '__all__' ||
-(selectedBlankCallFilter === 'blank_only' ? isBlankCall(d) : !isBlankCall(d)))
+(selectedBlankCallFilter === 'blank_only' ? isBlankCall(d) : !isBlankCall(d))) &&
+(selectedFlaggedFilter === '__all__' ||
+(selectedFlaggedFilter === 'flagged_only' ? isFlaggedCall(d) : !isFlaggedCall(d)))
 );
 }
 
@@ -543,7 +555,7 @@ if (branchSummaryEl) branchSummaryEl.innerHTML = hasBranchData ? renderTeamSumma
 function renderFilterPanel(branches, callCategories) {
 return `
 <div class="filter-row">
-<label style="color:var(--muted); font-size:13px;">Branch:</label>
+<label style="color:var(--muted); font-size:13px;">Branch filter:</label>
 <select id="branchPicker">
 <option value="__all__">All branches</option>
 ${branches.map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('')}
@@ -560,6 +572,12 @@ ${callCategories.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('
 <option value="__all__">All calls</option>
 <option value="blank_only">Blank calls only</option>
 <option value="exclude_blank">Exclude blank calls</option>
+</select>
+<label style="color:var(--muted); font-size:13px;">Flagged Accounts:</label>
+<select id="flaggedPicker">
+<option value="__all__">All calls</option>
+<option value="flagged_only">Flagged only</option>
+<option value="exclude_flagged">Exclude flagged</option>
 </select>
 <label style="color:var(--muted); font-size:13px;">From:</label>
 <input type="date" id="dateFromPicker" value="${esc(selectedDateFrom)}">
@@ -737,6 +755,10 @@ document.getElementById('blankCallPicker').addEventListener('change', e => {
 selectedBlankCallFilter = e.target.value;
 applyFilters();
 });
+document.getElementById('flaggedPicker').addEventListener('change', e => {
+selectedFlaggedFilter = e.target.value;
+applyFilters();
+});
 document.getElementById('downloadCallsBtn').addEventListener('click', downloadCallsAsExcel);
 document.getElementById('clearFiltersBtn').addEventListener('click', () => {
 selectedBranch = '__all__';
@@ -746,12 +768,14 @@ selectedDateTo = '';
 selectedScoringDate = '';
 selectedCallCategory = '__all__';
 selectedBlankCallFilter = '__all__';
+selectedFlaggedFilter = '__all__';
 document.getElementById('branchPicker').value = '__all__';
 document.getElementById('dateFromPicker').value = '';
 document.getElementById('dateToPicker').value = '';
 document.getElementById('scoringDatePicker').value = '';
 document.getElementById('callCategoryPicker').value = '__all__';
 document.getElementById('blankCallPicker').value = '__all__';
+document.getElementById('flaggedPicker').value = '__all__';
 rebuildAgentDropdown();
 applyFilters();
 });
