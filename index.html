@@ -284,7 +284,17 @@ if (audioEl && !audioEl.dataset.loaded) {
 audioEl.dataset.loaded = '1';
 const directUrl = `https://drive.google.com/uc?export=download&id=${encodeURIComponent(call.drive_file_id)}`;
 audioEl.src = directUrl;
-audioEl.addEventListener('error', () => showAudioFallback(call), { once: true });
+let settled = false;
+const fallbackOnce = () => { if (!settled) { settled = true; showAudioFallback(call); } };
+const clearFallbackTimer = () => { settled = true; };
+audioEl.addEventListener('error', fallbackOnce, { once: true });
+// Some Drive links neither play nor fire 'error' — they just hang
+// (e.g. a sign-in/consent redirect an <audio> element can't act on).
+// If nothing has loaded within a few seconds, treat that as failure
+// too, rather than leaving a dead player on screen.
+audioEl.addEventListener('loadeddata', clearFallbackTimer, { once: true });
+audioEl.addEventListener('canplay', clearFallbackTimer, { once: true });
+setTimeout(() => { if (audioEl.readyState === 0) fallbackOnce(); }, 6000);
 audioEl.play().catch(() => {});
 document.querySelectorAll('#speedRow .speed-btn').forEach(btn => {
 btn.addEventListener('click', () => {
@@ -307,7 +317,7 @@ if (speedRow) speedRow.style.display = 'none';
 if (fallback) {
 fallback.style.display = 'block';
 fallback.innerHTML = `
-<div class="fallback-note">Speed controls aren't available for this recording — showing the built-in Drive player instead.</div>
+<div class="fallback-note">This recording can't play inline here — showing Google Drive's built-in player instead.</div>
 <iframe src="https://drive.google.com/file/d/${encodeURIComponent(call.drive_file_id)}/preview" allow="autoplay"></iframe>
 <div style="margin-top:8px;"><a class="btn-small" href="https://drive.google.com/file/d/${encodeURIComponent(call.drive_file_id)}/view" target="_blank" rel="noopener">Open in Google Drive</a></div>
 `;
