@@ -5,6 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Call Quality Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A7%3C/text%3E%3C/svg%3E">
 <script>/*!
  * Chart.js v4.4.4
  * https://www.chartjs.org
@@ -65,6 +66,7 @@ padding: 16px;
 .card .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
 .card .value { font-size: 24px; font-weight: 700; }
 .filter-row { margin-bottom: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.filter-field { display: flex; align-items: center; gap: 8px; }
 select {
 background: #0f1115; color: var(--text); border: 1px solid var(--border);
 border-radius: 8px; padding: 7px 10px; font-size: 13px; min-height: 36px;
@@ -116,20 +118,34 @@ margin: 0 0 8px;
 @media (max-width: 820px) {
 body { padding: 16px; }
 .grid { grid-template-columns: 1fr; }
-.cards { grid-template-columns: 1fr 1fr; }
+.cards { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.card { padding: 10px; }
+.card .label { font-size: 10.5px; margin-bottom: 4px; }
+.card .value { font-size: 18px; }
 .header img { height: 32px; }
 h1 { font-size: 19px; }
 .chart-box { height: 220px; }
 .modal { max-width: 100%; padding: 18px; border-radius: 10px; }
 .modal-backdrop { padding: 10px; }
 select, .lang-toggle button { min-height: 40px; }
-.filter-row { flex-direction: column; align-items: stretch; }
-.filter-row label { margin-top: 4px; }
-.filter-row select, .filter-row input, .filter-row button { width: 100%; margin-left: 0 !important; }
+/* Each label + its own dropdown/input is grouped into one ".filter-field"
+   in the markup now, so pairing them on the same row no longer depends on
+   how much space happens to be left over on the previous row (the old
+   flat label/select-as-siblings layout could land a label at the END of
+   the PREVIOUS field's row instead of next to its own control). Fields
+   stack one below another (filter-row becomes a column of fields); each
+   field itself stays a row (label left, control filling the rest). */
+.filter-row { flex-direction: column; align-items: stretch; row-gap: 10px; }
+.filter-field { width: 100%; }
+.filter-field label { flex: 0 0 auto; width: auto; margin-top: 0; white-space: nowrap; }
+.filter-field select, .filter-field input { flex: 1 1 auto; width: auto; margin-left: 0 !important; }
+.filter-row > button { width: 100%; margin-left: 0 !important; }
 }
 @media (max-width: 480px) {
-.cards { grid-template-columns: 1fr; }
-.card .value { font-size: 20px; }
+.cards { gap: 6px; }
+.card { padding: 8px; }
+.card .label { font-size: 9.5px; }
+.card .value { font-size: 16px; }
 td.wrap {
 display: -webkit-box;
 -webkit-line-clamp: 2;
@@ -253,7 +269,7 @@ document.getElementById('modalBody').innerHTML = `
 <div class="modal-header">
 <div>
 <h3>${esc(call.agent)}</h3>
-<div class="modal-meta">${esc(call.date)}${call.call_category ? ' &bull; ' + esc(call.call_category) : ''}${branchOf(call.agent) ? ' &bull; ' + esc(branchOf(call.agent)) : ''}</div>
+<div class="modal-meta">${esc(call.date)}${call.call_category ? ' &bull; ' + esc(call.call_category) : ''}${branchOf(call.agent) ? ' &bull; ' + esc(branchOf(call.agent)) : ''}${formatDuration(call.duration_seconds) !== '-' ? ' &bull; ' + esc(formatDuration(call.duration_seconds)) : ''}</div>
 ${call.audio_file ? `<div style="color:var(--muted); font-size:11.5px; margin-top:2px; word-break:break-all;">${esc(displayFilename(call.audio_file, call.phone_number))}</div>` : ''}
 </div>
 <div style="display:flex; align-items:center; gap:10px;">
@@ -343,7 +359,7 @@ if (e.target.id === 'modalBackdrop') closeModal();
 });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-let tableSort = { column: 'date', direction: 'desc' };
+let tableSort = { column: 'scored_at', direction: 'desc' };
 
 function sortIndicator(column) {
 if (tableSort.column !== column) return '';
@@ -565,34 +581,53 @@ if (branchSummaryEl) branchSummaryEl.innerHTML = hasBranchData ? renderTeamSumma
 }
 
 function renderFilterPanel(branches, callCategories) {
+// Each label + its control is wrapped in its own ".filter-field" div —
+// this is what lets the mobile layout put a label on the same row as
+// ITS OWN dropdown: a plain flat flex-wrap of alternating <label>/<select>
+// siblings (the old markup) wraps wherever there's leftover space, which
+// often means the NEXT field's label ends up tacked onto the END of the
+// previous row instead of next to its own control. Grouping them removes
+// that ambiguity — a "field" always wraps as one unit.
 return `
 <div class="filter-row">
+<div class="filter-field">
 <label style="color:var(--muted); font-size:13px;">Branch:</label>
 <select id="branchPicker">
 <option value="__all__">All branches</option>
 ${branches.map(b => `<option value="${esc(b)}">${esc(b)}</option>`).join('')}
 </select>
+</div>
+<div class="filter-field">
 <label style="color:var(--muted); font-size:13px;">Agent:</label>
 <select id="agentPicker"></select>
+</div>
+<div class="filter-field">
 <label style="color:var(--muted); font-size:13px;">Call Category:</label>
 <select id="callCategoryPicker">
 <option value="__all__">All categories</option>
 ${callCategories.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('')}
 </select>
+</div>
+<div class="filter-field">
 <label style="color:var(--muted); font-size:13px;">Blank Calls:</label>
 <select id="blankCallPicker">
 <option value="__all__">All calls</option>
 <option value="blank_only">Blank calls only</option>
 <option value="exclude_blank">Exclude blank calls</option>
 </select>
+</div>
+<div class="filter-field">
 <label style="color:var(--muted); font-size:13px;">Flagged Accounts:</label>
 <select id="flaggedPicker">
 <option value="__all__">All calls</option>
 <option value="flagged_only">Flagged only</option>
 <option value="exclude_flagged">Exclude flagged</option>
 </select>
+</div>
+<div class="filter-field">
 <label style="color:var(--muted); font-size:13px;">Scoring Date:</label>
 <input type="date" id="scoringDatePicker" value="${esc(selectedScoringDate)}">
+</div>
 <button id="clearFiltersBtn" type="button" class="btn-small" style="margin-left:auto;">Clear filters</button>
 </div>
 `;
@@ -614,7 +649,7 @@ const agentCount = [...new Set(rows.map(d => d.agent))].length;
 const cardsEl = document.getElementById('cardsRow');
 if (!cardsEl) return;
 cardsEl.innerHTML = `
-<div class="card"><div class="label">Calls scored &mdash; ${esc(scopeLabel())}</div><div class="value">${rows.length}</div></div>
+<div class="card"><div class="label">Total Calls</div><div class="value">${rows.length}</div></div>
 <div class="card"><div class="label">Agents</div><div class="value">${agentCount}</div></div>
 <div class="card"><div class="label">Avg score</div><div class="value">${avg}</div></div>
 `;
